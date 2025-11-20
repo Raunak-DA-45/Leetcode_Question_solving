@@ -75,23 +75,22 @@ WHERE r1 = 1;  -- Only include top-paid employee(s) per department
 -- ================================
 -- METHOD 2: Using MAX() OVER()
 -- ================================
-WITH r1 AS (
-    SELECT
-        name,
-        departmentId,
-        salary,
-        MAX(salary) OVER(PARTITION BY departmentId) AS max_salary  -- Maximum salary in each department
-    FROM dbo.Employee
-),
-n1 AS (
-    SELECT departmentId, name, salary
-    FROM r1
-    WHERE salary = max_salary     -- Only employees whose salary equals the max salary
+WITH cte1 AS (
+    SELECT 
+        e.name AS employee,                 -- Employee name
+        e.salary AS salary,                 -- Employee salary
+        d.name AS department,               -- Department name
+        MAX(e.salary) OVER(PARTITION BY d.name) AS max_salary  -- Maximum salary per department
+    FROM dbo.Employee e
+    INNER JOIN dbo.Department d
+        ON e.departmentId = d.id
 )
 SELECT 
-    d.name AS department,
-    n.name AS employee,
-    n.salary
-FROM  n1 n
-INNER JOIN dbo.Department d
-    ON d.id = n.departmentId;
+    department,
+    employee,
+    salary
+FROM cte1
+WHERE salary = max_salary;  -- Only include top-paid employee(s) per department
+
+
+
